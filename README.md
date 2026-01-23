@@ -10,6 +10,27 @@
 
 <h1 align="center">🧠 Agent Skills Repository</h1>
 
+---
+
+## 🆕 NEW: GitHub Copilot SDK Skill
+
+<p align="center">
+  <img src="https://github.com/github/copilot-sdk/raw/main/assets/RepoHeader_01.png" alt="GitHub Copilot SDK" width="600"/>
+</p>
+
+**Just added!** A comprehensive skill for building agentic applications with the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) — GitHub's new programmable layer for embedding Copilot's agentic workflows into any application.
+
+🔗 **[View the Copilot SDK Skill →](skills/copilot-sdk/SKILL.md)**
+
+**What you'll learn:**
+- Install and configure the SDK in TypeScript, Python, Go, and .NET
+- Create custom tools that Copilot can invoke during reasoning
+- Implement streaming responses for real-time output
+- Manage sessions and persist conversations
+- Handle errors gracefully with proper cleanup
+
+---
+
 <p align="center">
   <strong>A curated collection of AI agent skills for enhanced coding assistance</strong>
 </p>
@@ -217,6 +238,7 @@ Agent Skills work with these AI coding agents:
 
 | Skill | Description | Keywords |
 |:------|:------------|:---------|
+| **[copilot-sdk](skills/copilot-sdk/SKILL.md)** 🆕 | GitHub Copilot SDK for building agentic applications | `Copilot SDK`, `GitHub SDK`, `agentic app`, `embed Copilot` |
 | **[aws-agentcore](skills/aws-agentcore/SKILL.md)** | AWS Bedrock AgentCore development patterns | `AgentCore`, `Bedrock Agent`, `AWS agent` |
 | **[aws-strands](skills/aws-strands/SKILL.md)** | Model-agnostic agent framework with Strands SDK | `Strands`, `ReAct agent`, `model-agnostic` |
 | **[aws-account-management](skills/aws-account-management/SKILL.md)** | AWS Organizations, IAM, billing & multi-account | `AWS Organizations`, `IAM`, `SCPs`, `Cost Explorer` |
@@ -504,6 +526,8 @@ Quick start and core patterns...
 ai-agents-skills/
 ├── 📄 README.md
 ├── 📁 skills/
+│   ├── 📁 copilot-sdk/        # 🆕 NEW!
+│   │   └── 📄 SKILL.md
 │   ├── 📁 aws-agentcore/
 │   │   └── 📄 SKILL.md
 │   ├── 📁 aws-strands/
