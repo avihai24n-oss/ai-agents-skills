@@ -256,6 +256,7 @@ Agent Skills work with these AI coding agents:
 | **[mobile-responsiveness](skills/mobile-responsiveness/SKILL.md)** | Responsive design and mobile-first patterns | `responsive`, `mobile-first`, `breakpoints` |
 | **[analytics-metrics](skills/analytics-metrics/SKILL.md)** | Data visualization and analytics dashboards | `analytics`, `dashboard`, `charts`, `KPI` |
 | **[mermaid-diagrams](skills/mermaid-diagrams/SKILL.md)** | Mermaid diagram syntax for visualizations | `Mermaid`, `flowchart`, `sequence diagram` |
+| **[local-llm-router](skills/local-llm-router/SKILL.md)** | Route queries to local LLMs in air-gapped networks with Serena MCP | `local LLM`, `Ollama`, `LM Studio`, `air-gapped`, `Serena`, `model routing` |
 
 ---
 
@@ -566,8 +567,12 @@ ai-agents-skills/
 │   │   └── 📄 SKILL.md
 │   ├── 📁 analytics-metrics/
 │   │   └── 📄 SKILL.md
-│   └── 📁 mermaid-diagrams/
-│       └── 📄 SKILL.md
+│   ├── 📁 mermaid-diagrams/
+│   │   └── 📄 SKILL.md
+│   └── 📁 local-llm-router/
+│       ├── 📄 SKILL.md
+│       └── 📁 references/
+│           └── 📄 model-matrix.md
 └── 📁 templates/
     └── 📁 skill-template/
         └── 📄 SKILL.md
