@@ -12,22 +12,17 @@
 
 ---
 
-## 🆕 NEW: GitHub Copilot SDK Skill
+## 🆕 NEW: Honest Agent Skill
 
-<p align="center">
-  <img src="https://github.com/github/copilot-sdk/raw/main/assets/RepoHeader_01.png" alt="GitHub Copilot SDK" width="600"/>
-</p>
+**Just added!** A universal skill that configures ALL your AI coding agents to be honest, objective, and non-sycophantic. Run it once, and every agent (Claude Code, GitHub Copilot, Cursor, Windsurf, etc.) will stop telling you what you want to hear and start giving you honest, direct feedback.
 
-**Just added!** A comprehensive skill for building agentic applications with the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) — GitHub's new programmable layer for embedding Copilot's agentic workflows into any application.
+🔗 **[View the Honest Agent Skill →](skills/honest-agent/SKILL.md)**
 
-🔗 **[View the Copilot SDK Skill →](skills/copilot-sdk/SKILL.md)**
-
-**What you'll learn:**
-- Install and configure the SDK in TypeScript, Python, Go, and .NET
-- Create custom tools that Copilot can invoke during reasoning
-- Implement streaming responses for real-time output
-- Manage sessions and persist conversations
-- Handle errors gracefully with proper cleanup
+**What it does:**
+- Configures honest, objective communication across 12+ AI coding agents
+- One-time setup that updates all your agent instruction files
+- Supports both project-level and global configuration
+- Works with Claude Code, Copilot, Cursor, Windsurf, Cline, JetBrains AI, and more
 
 ---
 
@@ -238,7 +233,8 @@ Agent Skills work with these AI coding agents:
 
 | Skill | Description | Keywords |
 |:------|:------------|:---------|
-| **[copilot-sdk](skills/copilot-sdk/SKILL.md)** 🆕 | GitHub Copilot SDK for building agentic applications | `Copilot SDK`, `GitHub SDK`, `agentic app`, `embed Copilot` |
+| **[copilot-sdk](skills/copilot-sdk/SKILL.md)** | GitHub Copilot SDK for building agentic applications | `Copilot SDK`, `GitHub SDK`, `agentic app`, `embed Copilot` |
+| **[honest-agent](skills/honest-agent/SKILL.md)** 🆕 | Configure all AI agents for honest, objective feedback | `honest agent`, `no sycophancy`, `objective`, `contradict me` |
 | **[aws-agentcore](skills/aws-agentcore/SKILL.md)** | AWS Bedrock AgentCore development patterns | `AgentCore`, `Bedrock Agent`, `AWS agent` |
 | **[aws-strands](skills/aws-strands/SKILL.md)** | Model-agnostic agent framework with Strands SDK | `Strands`, `ReAct agent`, `model-agnostic` |
 | **[aws-account-management](skills/aws-account-management/SKILL.md)** | AWS Organizations, IAM, billing & multi-account | `AWS Organizations`, `IAM`, `SCPs`, `Cost Explorer` |
@@ -526,7 +522,9 @@ Quick start and core patterns...
 ai-agents-skills/
 ├── 📄 README.md
 ├── 📁 skills/
-│   ├── 📁 copilot-sdk/        # 🆕 NEW!
+│   ├── 📁 copilot-sdk/
+│   │   └── 📄 SKILL.md
+│   ├── 📁 honest-agent/       # 🆕 NEW!
 │   │   └── 📄 SKILL.md
 │   ├── 📁 aws-agentcore/
 │   │   └── 📄 SKILL.md
