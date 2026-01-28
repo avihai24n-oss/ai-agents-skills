@@ -7,6 +7,15 @@ description: Configure AI coding agents to be honest, objective, and non-sycopha
 
 A one-time setup skill that configures your AI coding agents to be honest, objective, and willing to contradict you when needed.
 
+## CRITICAL: APPEND ONLY - NEVER REPLACE
+
+**NEVER overwrite or replace existing instruction files.** Always:
+1. **READ the existing file first** (if it exists)
+2. **APPEND the new configuration** to the end of the file
+3. **PRESERVE all existing content** - do not modify or delete anything
+
+If the file doesn't exist, create it. If it exists, append to it.
+
 ## Supported Agents & Verified File Locations
 
 | Agent | Project Location | Global Location |
@@ -36,9 +45,11 @@ Present options:
 - **Global-level**: Configure for all projects (where supported)
 - **Both**: Configure both project and global settings
 
-### Step 3: Apply Configuration
+### Step 3: Apply Configuration (APPEND ONLY)
 
-Add or append this section to each detected/requested instruction file:
+**IMPORTANT: If the file exists, READ it first, then APPEND to the end. NEVER replace existing content.**
+
+Add the following section to the END of each instruction file:
 
 ```markdown
 ## Communication & Feedback Style
@@ -54,11 +65,12 @@ Add or append this section to each detected/requested instruction file:
 - Avoid phrases like "Great idea!" unless genuinely warranted
 ```
 
-### Step 4: Agent-Specific Formats
+### Step 4: Agent-Specific Formats (APPEND ONLY)
 
 **For agents using markdown** (Claude Code, Copilot, Cline, Continue.dev):
-- Create/update the markdown file with the configuration above
-- If the file exists, append the section (don't overwrite existing content)
+- If file EXISTS: Read it first, then APPEND the configuration to the END
+- If file DOES NOT EXIST: Create new file with the configuration
+- **NEVER use Write tool to overwrite - use Edit tool to append, or read+write preserving content**
 
 **For `.cursorrules` and `.windsurfrules`**:
 ```
@@ -89,11 +101,16 @@ After creating/updating files:
 
 **Agent**:
 1. Checks for existing config files
-2. Finds: `.claude/CLAUDE.md`, `.github/copilot-instructions.md`
+2. Finds: `.claude/CLAUDE.md` (exists, 50 lines), `.github/copilot-instructions.md` (exists, 20 lines)
 3. Asks: "Configure project-level, global, or both?"
 4. User: "Both"
-5. Updates project files + creates `~/.claude/CLAUDE.md`
-6. Reports: "Configured 2 agents (Claude Code, GitHub Copilot). Restart your IDE for changes to take effect."
+5. **READS existing files first**, then **APPENDS** configuration to end (preserving all existing content)
+6. Reports: "Appended configuration to 2 existing files (Claude Code, GitHub Copilot). All existing content preserved. Restart your IDE for changes to take effect."
+
+**WRONG approach** (never do this):
+- Using Write tool to overwrite the entire file
+- Not reading the file first
+- Replacing existing content
 
 ## Resources
 
