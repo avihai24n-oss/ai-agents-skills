@@ -266,6 +266,10 @@ def build_enriched_query(query: str, serena_context: dict) -> str:
 | Jan | `localhost:1337` | `/v1/models` | `/v1/models` | `/v1/chat/completions` | OpenAI |
 | OpenWebUI | `localhost:3000` | `/api/health` | `/api/models` | `/api/chat` | Custom |
 | LocalAI | `localhost:8080` | `/readyz` | `/v1/models` | `/v1/chat/completions` | OpenAI |
+| vLLM | `localhost:8000` | `/health` | `/v1/models` | `/v1/chat/completions` | OpenAI |
+| llama.cpp | `localhost:8080` | `/health` | `/v1/models` | `/v1/chat/completions` | OpenAI |
+| Kobold.cpp | `localhost:5001` | `/api/v1/info` | `/api/v1/models` | `/api/v1/generate` | Custom |
+| GPT4All | `localhost:4891` | `/v1/models` | `/v1/models` | `/v1/chat/completions` | OpenAI |
 | text-generation-webui | `localhost:5000` | `/api/v1/model` | `/api/v1/models` | `/api/v1/chat` | Custom |
 
 ### OS Detection
@@ -410,6 +414,42 @@ SERVICE_DEFAULTS = {
         type='localai',
         endpoint='http://localhost:8080',
         health_path='/readyz',
+        models_path='/v1/models',
+        chat_path='/v1/chat/completions',
+        api_style='openai'
+    ),
+    'vllm': LLMService(
+        name='vLLM',
+        type='vllm',
+        endpoint='http://localhost:8000',
+        health_path='/health',
+        models_path='/v1/models',
+        chat_path='/v1/chat/completions',
+        api_style='openai'
+    ),
+    'llamacpp': LLMService(
+        name='llama.cpp',
+        type='llamacpp',
+        endpoint='http://localhost:8080',
+        health_path='/health',
+        models_path='/v1/models',
+        chat_path='/v1/chat/completions',
+        api_style='openai'
+    ),
+    'koboldcpp': LLMService(
+        name='Kobold.cpp',
+        type='koboldcpp',
+        endpoint='http://localhost:5001',
+        health_path='/api/v1/info',
+        models_path='/api/v1/model',
+        chat_path='/api/v1/generate',
+        api_style='custom'
+    ),
+    'gpt4all': LLMService(
+        name='GPT4All',
+        type='gpt4all',
+        endpoint='http://localhost:4891',
+        health_path='/v1/models',
         models_path='/v1/models',
         chat_path='/v1/chat/completions',
         api_style='openai'
@@ -710,20 +750,34 @@ class ModelCapability:
     tier: int  # 1=best, 2=good, 3=basic
     quantization: Optional[str] = None
 
-# Comprehensive model database (30+ models)
+# Comprehensive model database (40+ models) - Updated January 2025
 MODEL_DATABASE: dict[str, ModelCapability] = {
-    # === CODING SPECIALISTS ===
-    "qwen3-coder-30b": ModelCapability(
-        id="qwen3-coder-30b",
+    # === CODING SPECIALISTS (Tier 1) ===
+    "deepseek-v3": ModelCapability(
+        id="deepseek-v3",
+        family="deepseek",
+        context_window=128000,
+        vram_gb=48,  # MoE: 685B total, 37B active
+        categories=[TaskCategory.CODING, TaskCategory.REASONING, TaskCategory.ANALYSIS],
+        performance_scores={
+            TaskCategory.CODING: 99,
+            TaskCategory.REASONING: 97,
+            TaskCategory.ANALYSIS: 96,
+            TaskCategory.DOCUMENTATION: 92
+        },
+        tier=1
+    ),
+    "qwen2.5-coder-32b": ModelCapability(
+        id="qwen2.5-coder-32b",
         family="qwen",
         context_window=131072,
-        vram_gb=20,
+        vram_gb=22,
         categories=[TaskCategory.CODING, TaskCategory.ANALYSIS],
         performance_scores={
-            TaskCategory.CODING: 95,
-            TaskCategory.REASONING: 75,
-            TaskCategory.ANALYSIS: 90,
-            TaskCategory.DOCUMENTATION: 85
+            TaskCategory.CODING: 96,
+            TaskCategory.REASONING: 82,
+            TaskCategory.ANALYSIS: 92,
+            TaskCategory.DOCUMENTATION: 88
         },
         tier=1
     ),
@@ -731,10 +785,10 @@ MODEL_DATABASE: dict[str, ModelCapability] = {
         id="deepseek-coder-v2",
         family="deepseek",
         context_window=128000,
-        vram_gb=48,
+        vram_gb=48,  # MoE: 236B total, 21B active
         categories=[TaskCategory.CODING, TaskCategory.ANALYSIS, TaskCategory.REASONING],
         performance_scores={
-            TaskCategory.CODING: 98,
+            TaskCategory.CODING: 95,
             TaskCategory.REASONING: 88,
             TaskCategory.ANALYSIS: 92,
             TaskCategory.DOCUMENTATION: 80
@@ -827,115 +881,199 @@ MODEL_DATABASE: dict[str, ModelCapability] = {
     ),
 
     # === REASONING SPECIALISTS ===
-    "qwen3-235b": ModelCapability(
-        id="qwen3-235b",
-        family="qwen",
-        context_window=131072,
-        vram_gb=140,
-        categories=[TaskCategory.REASONING, TaskCategory.CODING],
-        performance_scores={
-            TaskCategory.CODING: 90,
-            TaskCategory.REASONING: 98,
-            TaskCategory.ANALYSIS: 95,
-            TaskCategory.DOCUMENTATION: 92
-        },
-        tier=1
-    ),
     "deepseek-r1": ModelCapability(
         id="deepseek-r1",
         family="deepseek",
         context_window=128000,
-        vram_gb=48,
-        categories=[TaskCategory.REASONING],
+        vram_gb=160,  # 671B total
+        categories=[TaskCategory.REASONING, TaskCategory.CODING],
         performance_scores={
-            TaskCategory.CODING: 85,
-            TaskCategory.REASONING: 96,
-            TaskCategory.ANALYSIS: 90,
-            TaskCategory.DOCUMENTATION: 85
+            TaskCategory.CODING: 92,
+            TaskCategory.REASONING: 99,
+            TaskCategory.ANALYSIS: 95,
+            TaskCategory.DOCUMENTATION: 90
         },
         tier=1
     ),
-    "llama-4-maverick": ModelCapability(
-        id="llama-4-maverick",
-        family="llama",
+    "deepseek-r1-distill-70b": ModelCapability(
+        id="deepseek-r1-distill-70b",
+        family="deepseek",
         context_window=128000,
-        vram_gb=48,
+        vram_gb=42,
         categories=[TaskCategory.REASONING, TaskCategory.CODING],
         performance_scores={
             TaskCategory.CODING: 88,
             TaskCategory.REASONING: 94,
+            TaskCategory.ANALYSIS: 90,
+            TaskCategory.DOCUMENTATION: 86
+        },
+        tier=1
+    ),
+    "qwen2.5-72b-instruct": ModelCapability(
+        id="qwen2.5-72b-instruct",
+        family="qwen",
+        context_window=131072,
+        vram_gb=48,
+        categories=[TaskCategory.REASONING, TaskCategory.CODING],
+        performance_scores={
+            TaskCategory.CODING: 88,
+            TaskCategory.REASONING: 95,
+            TaskCategory.ANALYSIS: 92,
+            TaskCategory.DOCUMENTATION: 94
+        },
+        tier=1
+    ),
+    "llama-3.3-70b-instruct": ModelCapability(
+        id="llama-3.3-70b-instruct",
+        family="llama",
+        context_window=128000,
+        vram_gb=42,
+        categories=[TaskCategory.REASONING, TaskCategory.CODING],
+        performance_scores={
+            TaskCategory.CODING: 85,
+            TaskCategory.REASONING: 92,
             TaskCategory.ANALYSIS: 88,
             TaskCategory.DOCUMENTATION: 90
         },
         tier=1
     ),
-    "qwen2.5-72b": ModelCapability(
-        id="qwen2.5-72b",
-        family="qwen",
-        context_window=131072,
-        vram_gb=48,
-        categories=[TaskCategory.REASONING, TaskCategory.DOCUMENTATION],
+    "deepseek-r1-distill-32b": ModelCapability(
+        id="deepseek-r1-distill-32b",
+        family="deepseek",
+        context_window=128000,
+        vram_gb=22,
+        categories=[TaskCategory.REASONING, TaskCategory.CODING],
         performance_scores={
             TaskCategory.CODING: 82,
             TaskCategory.REASONING: 90,
             TaskCategory.ANALYSIS: 85,
-            TaskCategory.DOCUMENTATION: 92
-        },
-        tier=1
-    ),
-    "llama-3.3-70b": ModelCapability(
-        id="llama-3.3-70b",
-        family="llama",
-        context_window=128000,
-        vram_gb=40,
-        categories=[TaskCategory.REASONING, TaskCategory.DOCUMENTATION],
-        performance_scores={
-            TaskCategory.CODING: 80,
-            TaskCategory.REASONING: 88,
-            TaskCategory.ANALYSIS: 82,
-            TaskCategory.DOCUMENTATION: 90
-        },
-        tier=1
-    ),
-    "mixtral-8x22b": ModelCapability(
-        id="mixtral-8x22b",
-        family="mixtral",
-        context_window=65536,
-        vram_gb=48,
-        categories=[TaskCategory.REASONING],
-        performance_scores={
-            TaskCategory.CODING: 78,
-            TaskCategory.REASONING: 85,
-            TaskCategory.ANALYSIS: 80,
             TaskCategory.DOCUMENTATION: 82
         },
         tier=2
     ),
-    "qwen2.5-32b": ModelCapability(
-        id="qwen2.5-32b",
-        family="qwen",
-        context_window=131072,
-        vram_gb=20,
-        categories=[TaskCategory.REASONING, TaskCategory.DOCUMENTATION],
+    "mistral-small-24b": ModelCapability(
+        id="mistral-small-24b",
+        family="mistral",
+        context_window=32768,
+        vram_gb=16,
+        categories=[TaskCategory.REASONING, TaskCategory.CODING],
         performance_scores={
-            TaskCategory.CODING: 75,
-            TaskCategory.REASONING: 82,
-            TaskCategory.ANALYSIS: 78,
-            TaskCategory.DOCUMENTATION: 85
+            TaskCategory.CODING: 80,
+            TaskCategory.REASONING: 85,
+            TaskCategory.ANALYSIS: 82,
+            TaskCategory.DOCUMENTATION: 84
         },
         tier=2
     ),
-    "llama-3.1-8b": ModelCapability(
-        id="llama-3.1-8b",
+    "qwen2.5-32b-instruct": ModelCapability(
+        id="qwen2.5-32b-instruct",
+        family="qwen",
+        context_window=131072,
+        vram_gb=22,
+        categories=[TaskCategory.REASONING, TaskCategory.DOCUMENTATION],
+        performance_scores={
+            TaskCategory.CODING: 78,
+            TaskCategory.REASONING: 86,
+            TaskCategory.ANALYSIS: 82,
+            TaskCategory.DOCUMENTATION: 88
+        },
+        tier=2
+    ),
+    "phi-4": ModelCapability(
+        id="phi-4",
+        family="phi",
+        context_window=16384,
+        vram_gb=10,
+        categories=[TaskCategory.REASONING, TaskCategory.CODING],
+        performance_scores={
+            TaskCategory.CODING: 82,
+            TaskCategory.REASONING: 88,
+            TaskCategory.ANALYSIS: 80,
+            TaskCategory.DOCUMENTATION: 78
+        },
+        tier=2
+    ),
+    "deepseek-r1-distill-14b": ModelCapability(
+        id="deepseek-r1-distill-14b",
+        family="deepseek",
+        context_window=128000,
+        vram_gb=10,
+        categories=[TaskCategory.REASONING],
+        performance_scores={
+            TaskCategory.CODING: 75,
+            TaskCategory.REASONING: 85,
+            TaskCategory.ANALYSIS: 78,
+            TaskCategory.DOCUMENTATION: 76
+        },
+        tier=2
+    ),
+    "llama-3.2-11b-vision": ModelCapability(
+        id="llama-3.2-11b-vision",
         family="llama",
+        context_window=128000,
+        vram_gb=8,
+        categories=[TaskCategory.REASONING, TaskCategory.DOCUMENTATION],
+        performance_scores={
+            TaskCategory.CODING: 68,
+            TaskCategory.REASONING: 78,
+            TaskCategory.ANALYSIS: 75,
+            TaskCategory.DOCUMENTATION: 80
+        },
+        tier=2
+    ),
+    "gemma-2-27b": ModelCapability(
+        id="gemma-2-27b",
+        family="gemma",
+        context_window=8192,
+        vram_gb=18,
+        categories=[TaskCategory.REASONING, TaskCategory.CODING],
+        performance_scores={
+            TaskCategory.CODING: 78,
+            TaskCategory.REASONING: 82,
+            TaskCategory.ANALYSIS: 78,
+            TaskCategory.DOCUMENTATION: 80
+        },
+        tier=2
+    ),
+    "deepseek-r1-distill-8b": ModelCapability(
+        id="deepseek-r1-distill-8b",
+        family="deepseek",
         context_window=128000,
         vram_gb=6,
         categories=[TaskCategory.REASONING],
         performance_scores={
-            TaskCategory.CODING: 60,
-            TaskCategory.REASONING: 70,
-            TaskCategory.ANALYSIS: 65,
-            TaskCategory.DOCUMENTATION: 72
+            TaskCategory.CODING: 68,
+            TaskCategory.REASONING: 78,
+            TaskCategory.ANALYSIS: 70,
+            TaskCategory.DOCUMENTATION: 68
+        },
+        tier=3
+    ),
+    "gemma-2-9b": ModelCapability(
+        id="gemma-2-9b",
+        family="gemma",
+        context_window=8192,
+        vram_gb=7,
+        categories=[TaskCategory.REASONING, TaskCategory.CODING],
+        performance_scores={
+            TaskCategory.CODING: 72,
+            TaskCategory.REASONING: 75,
+            TaskCategory.ANALYSIS: 70,
+            TaskCategory.DOCUMENTATION: 74
+        },
+        tier=3
+    ),
+    "llama-3.2-3b": ModelCapability(
+        id="llama-3.2-3b",
+        family="llama",
+        context_window=128000,
+        vram_gb=3,
+        categories=[TaskCategory.REASONING],
+        performance_scores={
+            TaskCategory.CODING: 55,
+            TaskCategory.REASONING: 65,
+            TaskCategory.ANALYSIS: 58,
+            TaskCategory.DOCUMENTATION: 65
         },
         tier=3
     ),
@@ -1115,25 +1253,35 @@ MODEL_DATABASE: dict[str, ModelCapability] = {
     ),
 }
 
-# Task-to-model priority mapping
+# Task-to-model priority mapping (Updated January 2025)
 TASK_MODEL_PRIORITY = {
     TaskCategory.CODING: [
-        "qwen3-coder-30b", "deepseek-coder-v2", "codellama-70b",
-        "codellama-34b", "qwen2.5-coder-14b", "starcoder2-15b",
-        "deepseek-coder-6.7b", "codellama-7b", "magicoder-7b"
+        # Tier 1 - Best
+        "deepseek-v3", "qwen2.5-coder-32b", "deepseek-coder-v2",
+        # Tier 2 - Good
+        "codellama-70b", "qwen2.5-coder-14b", "codellama-34b",
+        "starcoder2-15b", "phi-4",
+        # Tier 3 - Basic
+        "qwen2.5-coder-7b", "codellama-7b", "deepseek-coder-6.7b"
     ],
     TaskCategory.REASONING: [
-        "qwen3-235b", "deepseek-r1", "llama-4-maverick",
-        "qwen2.5-72b", "llama-3.3-70b", "mixtral-8x22b",
-        "qwen2.5-32b", "command-r-plus", "nous-hermes-2-mixtral"
+        # Tier 1 - Best
+        "deepseek-r1", "deepseek-v3", "deepseek-r1-distill-70b",
+        "qwen2.5-72b-instruct", "llama-3.3-70b-instruct",
+        # Tier 2 - Good
+        "deepseek-r1-distill-32b", "mistral-small-24b", "qwen2.5-32b-instruct",
+        "phi-4", "gemma-2-27b",
+        # Tier 3 - Basic
+        "deepseek-r1-distill-14b", "deepseek-r1-distill-8b", "gemma-2-9b"
     ],
     TaskCategory.ANALYSIS: [
-        "qwen3-coder-30b", "deepseek-coder-v2", "codellama-34b-instruct",
-        "codellama-70b", "qwen2.5-72b"
+        # Requires Serena LSP
+        "deepseek-v3", "qwen2.5-coder-32b", "deepseek-coder-v2",
+        "codellama-34b-instruct", "qwen2.5-72b-instruct"
     ],
     TaskCategory.DOCUMENTATION: [
-        "qwen2.5-72b", "llama-3.3-70b", "qwen2.5-32b",
-        "mistral-nemo-12b", "command-r-plus", "mistral-7b"
+        "qwen2.5-72b-instruct", "llama-3.3-70b-instruct", "qwen2.5-32b-instruct",
+        "mistral-small-24b", "mistral-nemo-12b", "gemma-2-27b"
     ],
 }
 ```
@@ -1520,26 +1668,26 @@ class RouterConfig:
     ))
     custom_endpoints: list[dict] = field(default_factory=list)
 
-    # Task routing
+    # Task routing (Updated January 2025)
     coding: TaskRoutingConfig = field(default_factory=lambda: TaskRoutingConfig(
-        primary_models=["qwen3-coder-30b", "deepseek-coder-v2"],
-        fallback_models=["codellama-34b", "qwen2.5-coder-14b"],
+        primary_models=["deepseek-v3", "qwen2.5-coder-32b", "deepseek-coder-v2"],
+        fallback_models=["codellama-34b", "qwen2.5-coder-14b", "phi-4"],
         min_context=8192
     ))
     reasoning: TaskRoutingConfig = field(default_factory=lambda: TaskRoutingConfig(
-        primary_models=["qwen3-235b", "deepseek-r1"],
-        fallback_models=["qwen2.5-72b", "llama-3.3-70b"],
+        primary_models=["deepseek-r1", "deepseek-v3", "qwen2.5-72b-instruct"],
+        fallback_models=["deepseek-r1-distill-32b", "mistral-small-24b"],
         min_context=16384
     ))
     analysis: TaskRoutingConfig = field(default_factory=lambda: TaskRoutingConfig(
-        primary_models=["qwen3-coder-30b", "deepseek-coder-v2"],
-        fallback_models=["codellama-34b-instruct"],
+        primary_models=["deepseek-v3", "qwen2.5-coder-32b"],
+        fallback_models=["codellama-34b-instruct", "qwen2.5-72b-instruct"],
         min_context=16384,
         require_serena=True
     ))
     documentation: TaskRoutingConfig = field(default_factory=lambda: TaskRoutingConfig(
-        primary_models=["qwen2.5-72b", "llama-3.3-70b"],
-        fallback_models=["qwen2.5-32b", "mistral-nemo-12b"],
+        primary_models=["qwen2.5-72b-instruct", "llama-3.3-70b-instruct"],
+        fallback_models=["qwen2.5-32b-instruct", "mistral-nemo-12b"],
         min_context=8192
     ))
 
@@ -1613,29 +1761,35 @@ services:
 task_routing:
   coding:
     primary_models:
-      - "qwen3-coder-30b"
+      - "deepseek-v3"
+      - "qwen2.5-coder-32b"
       - "deepseek-coder-v2"
     fallback_models:
       - "codellama-34b"
       - "qwen2.5-coder-14b"
+      - "phi-4"
     min_context: 8192
 
   reasoning:
     primary_models:
-      - "qwen3-235b"
       - "deepseek-r1"
+      - "deepseek-v3"
+      - "qwen2.5-72b-instruct"
     fallback_models:
-      - "qwen2.5-72b"
+      - "deepseek-r1-distill-32b"
+      - "mistral-small-24b"
     min_context: 16384
 
   analysis:
     primary_models:
-      - "qwen3-coder-30b"
+      - "deepseek-v3"
+      - "qwen2.5-coder-32b"
     require_serena: true
 
   documentation:
     primary_models:
-      - "qwen2.5-72b"
+      - "qwen2.5-72b-instruct"
+      - "llama-3.3-70b-instruct"
     fallback_models:
       - "mistral-nemo-12b"
 
