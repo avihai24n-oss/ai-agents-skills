@@ -19,10 +19,10 @@
 🔗 **[View the Honest Agent Skill →](skills/honest-agent/SKILL.md)**
 
 **What it does:**
-- Configures honest, objective communication across 12+ AI coding agents
+- Configures honest, objective communication across 7 verified AI coding agents
 - One-time setup that updates all your agent instruction files
 - Supports both project-level and global configuration
-- Works with Claude Code, Copilot, Cursor, Windsurf, Cline, JetBrains AI, and more
+- Works with Claude Code, Copilot, Cursor, Windsurf, Cline, Aider, and Continue.dev
 
 ---
 
