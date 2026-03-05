@@ -1,6 +1,6 @@
 ---
 name: google-workspace-cli
-description: Interact with all Google Workspace APIs via the `gws` CLI — Drive, Gmail, Calendar, Sheets, Docs, Slides, Chat, Tasks, Admin, Meet, Forms, Keep, and more. Use when the user needs to manage Google Drive files, send or read Gmail, create or query Calendar events, read or write Sheets/Docs/Slides, manage Chat spaces, administer Workspace users/groups, or automate any Google Workspace workflow. Also use when configuring the gws MCP server for AI agent integrations. Triggers on Google Workspace, gws, Google Drive, Gmail, Google Calendar, Google Sheets, Google Docs, Google Slides, Google Chat, Google Tasks, Google Meet, Google Forms, Google Keep, Google Admin, Workspace CLI, gws CLI, gws mcp, Google API, Workspace automation.
+description: Interact with all Google Workspace APIs via the `gws` CLI — Drive, Gmail, Calendar, Sheets, Docs, Slides, Chat, Tasks, Admin, Meet, Forms, Keep, People, Vault, Classroom, Apps Script, Events, Cloud Identity, Alert Center, Groups Settings, Licensing, Reseller, and Model Armor. Use when the user needs to manage Google Drive files, send or read Gmail, create or query Calendar events, read or write Sheets/Docs/Slides, manage Chat spaces, manage contacts, administer Workspace users/groups, manage eDiscovery, manage Google Classroom, run Apps Script, subscribe to Workspace events, or automate any Google Workspace workflow. Also use when configuring the gws MCP server for AI agent integrations or installing gws agent skills. Triggers on Google Workspace, gws, Google Drive, Gmail, Google Calendar, Google Sheets, Google Docs, Google Slides, Google Chat, Google Tasks, Google Meet, Google Forms, Google Keep, Google Admin, Google People, Google Contacts, Google Vault, Google Classroom, Apps Script, Cloud Identity, Alert Center, Workspace CLI, gws CLI, gws mcp, Google API, Workspace automation, npx skills add.
 ---
 
 # Google Workspace CLI (`gws`)
@@ -51,6 +51,8 @@ nix run github:googleworkspace/cli
 gws auth setup       # one-time: creates a Cloud project, enables APIs, logs you in
 gws auth login       # subsequent logins with scope selection
 ```
+
+> Credentials are encrypted at rest (AES-256-GCM) with the key stored in your OS keyring.
 
 ### Scoped Login (for unverified/testing OAuth apps, limited to ~25 scopes)
 
@@ -109,6 +111,15 @@ export GOOGLE_WORKSPACE_CLI_IMPERSONATED_USER=admin@example.com
 export GOOGLE_WORKSPACE_CLI_TOKEN=$(gcloud auth print-access-token)
 ```
 
+### Browser-Assisted Auth (for AI agents)
+
+Agents can complete OAuth with browser automation:
+
+- **Human flow:** Run `gws auth login`, open the printed URL, approve scopes.
+- **Agent-assisted flow:** The agent opens the URL, selects the account, handles consent prompts, and returns control once the localhost callback succeeds.
+
+If consent shows "Google hasn't verified this app" (testing mode), click **Continue**. If scope checkboxes appear, select required scopes (or **Select all**) before continuing.
+
 ### Auth Precedence
 
 | Priority | Method | Source |
@@ -119,6 +130,8 @@ export GOOGLE_WORKSPACE_CLI_TOKEN=$(gcloud auth print-access-token)
 | 4 | Plaintext credentials | `~/.config/gws/credentials.json` |
 
 Account resolution: `--account` flag > `GOOGLE_WORKSPACE_CLI_ACCOUNT` env var > default in `accounts.json`.
+
+> All environment variables can also live in a `.env` file in your project root.
 
 ## Command Structure
 
@@ -451,14 +464,167 @@ gws keep notes list
 gws keep notes get --params '{"name": "notes/NOTE_ID"}'
 ```
 
+### Google People (Contacts & Profiles)
+
+```bash
+# List contacts
+gws people people connections list --params '{"resourceName": "people/me", "personFields": "names,emailAddresses,phoneNumbers", "pageSize": 50}'
+
+# Get a specific contact
+gws people people get --params '{"resourceName": "people/PERSON_ID", "personFields": "names,emailAddresses,organizations"}'
+
+# Search contacts
+gws people people searchContacts --params '{"query": "Alice", "readMask": "names,emailAddresses"}'
+
+# Create a contact
+gws people people createContact --json '{
+  "names": [{"givenName": "Jane", "familyName": "Smith"}],
+  "emailAddresses": [{"value": "jane@example.com"}],
+  "phoneNumbers": [{"value": "+1-555-0100"}]
+}'
+
+# List directory (domain contacts)
+gws people people listDirectoryPeople --params '{"readMask": "names,emailAddresses", "sources": ["DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE"], "pageSize": 100}'
+```
+
+### Google Workspace Events
+
+```bash
+# Create a subscription to watch for changes
+gws events subscriptions create --json '{
+  "targetResource": "//calendar.googleapis.com/calendars/primary",
+  "eventTypes": ["google.workspace.calendar.event.v1.created"],
+  "notificationEndpoint": {"pubsubTopic": "projects/PROJECT/topics/TOPIC"},
+  "payloadOptions": {"includeResource": true}
+}'
+
+# List subscriptions
+gws events subscriptions list
+
+# Delete a subscription
+gws events subscriptions delete --params '{"name": "subscriptions/SUB_ID"}'
+```
+
+### Google Vault (eDiscovery)
+
+```bash
+# List matters
+gws vault matters list
+
+# Create a matter
+gws vault matters create --json '{"name": "Investigation Q1", "description": "Q1 compliance audit"}'
+
+# Create a hold
+gws vault matters holds create --params '{"matterId": "MATTER_ID"}' --json '{
+  "name": "Email Hold",
+  "corpus": "MAIL",
+  "accounts": [{"accountId": "user@example.com"}]
+}'
+```
+
+### Google Classroom
+
+```bash
+# List courses
+gws classroom courses list
+
+# Create a course
+gws classroom courses create --json '{"name": "CS101", "section": "Fall 2026", "ownerId": "me"}'
+
+# List students in a course
+gws classroom courses students list --params '{"courseId": "COURSE_ID"}'
+
+# Create coursework
+gws classroom courses courseWork create --params '{"courseId": "COURSE_ID"}' --json '{
+  "title": "Assignment 1",
+  "workType": "ASSIGNMENT",
+  "dueDate": {"year": 2026, "month": 3, "day": 15}
+}'
+```
+
+### Admin Reports (Audit Logs)
+
+```bash
+# List admin activities
+gws admin-reports activities list --params '{"userKey": "all", "applicationName": "admin", "maxResults": 50}'
+
+# List login activities
+gws admin-reports activities list --params '{"userKey": "all", "applicationName": "login", "maxResults": 50}'
+
+# List Drive audit logs
+gws admin-reports activities list --params '{"userKey": "all", "applicationName": "drive", "maxResults": 50}'
+```
+
+### Alert Center (Security Alerts)
+
+```bash
+# List alerts
+gws alertcenter alerts list
+
+# Get alert details
+gws alertcenter alerts get --params '{"alertId": "ALERT_ID"}'
+```
+
+### Cloud Identity
+
+```bash
+# List groups
+gws cloudidentity groups list --params '{"parent": "customers/CUSTOMER_ID"}'
+
+# Search groups
+gws cloudidentity groups search --params '{"query": "parent == \"customers/CUSTOMER_ID\""}'
+
+# List memberships
+gws cloudidentity groups memberships list --params '{"parent": "groups/GROUP_ID"}'
+```
+
+### Groups Settings
+
+```bash
+# Get group settings
+gws groupssettings groups get --params '{"groupUniqueId": "group@example.com"}'
+
+# Update group settings
+gws groupssettings groups update --params '{"groupUniqueId": "group@example.com"}' --json '{
+  "whoCanPostMessage": "ALL_MEMBERS_CAN_POST",
+  "messageModerationLevel": "MODERATE_NONE"
+}'
+```
+
+### Licensing
+
+```bash
+# List license assignments
+gws licensing licenseAssignments listForProduct --params '{"productId": "Google-Apps", "customerId": "CUSTOMER_ID"}'
+
+# Assign a license
+gws licensing licenseAssignments insert --params '{"productId": "Google-Apps", "skuId": "SKU_ID"}' --json '{"userId": "user@example.com"}'
+```
+
+### Reseller
+
+```bash
+# List subscriptions
+gws reseller subscriptions list --params '{"customerId": "CUSTOMER_ID"}'
+
+# Get a subscription
+gws reseller subscriptions get --params '{"customerId": "CUSTOMER_ID", "subscriptionId": "SUB_ID"}'
+```
+
 ### Apps Script
 
 ```bash
 # List projects
 gws apps-script projects list
 
+# Get project content
+gws apps-script projects getContent --params '{"scriptId": "SCRIPT_ID"}'
+
 # Deploy a project
 gws apps-script projects deployments create --params '{"scriptId": "SCRIPT_ID"}' --json '{"versionNumber": 1}'
+
+# Run a function
+gws apps-script scripts run --params '{"scriptId": "SCRIPT_ID"}' --json '{"function": "myFunction", "parameters": []}'
 ```
 
 ## Workflow Helpers (Shortcut Commands)
@@ -466,33 +632,64 @@ gws apps-script projects deployments create --params '{"scriptId": "SCRIPT_ID"}'
 `gws` ships higher-level helper commands for the most common multi-step operations:
 
 ```bash
+# --- Drive ---
 # Upload a file to Drive with automatic metadata
 gws drive-upload ./report.pdf
 
+# --- Sheets ---
 # Append a row to a sheet
 gws sheets-append --spreadsheet-id ID --range 'Sheet1!A1' --values '[["Name", "Score"]]'
 
 # Read sheet values
 gws sheets-read --spreadsheet-id ID --range 'Sheet1!A1:C10'
 
+# --- Gmail ---
 # Send an email (simplified)
 gws gmail-send --to user@example.com --subject "Hello" --body "Hi there"
 
-# Triage inbox — show unread summary
+# Triage inbox — show unread summary (sender, subject, date)
 gws gmail-triage
 
-# Show upcoming calendar agenda
+# Watch for new emails and stream them as NDJSON
+gws gmail-watch
+
+# --- Calendar ---
+# Show upcoming calendar agenda across all calendars
 gws calendar-agenda
 
 # Insert a calendar event quickly
 gws calendar-insert --summary "Lunch" --start "2026-03-06T12:00:00" --end "2026-03-06T13:00:00"
 
+# --- Docs ---
 # Append text to a Google Doc
 gws docs-write --document-id DOC_ID --text "New paragraph here"
 
-# Send a Chat message
+# --- Chat ---
+# Send a Chat message to a space
 gws chat-send --space "spaces/SPACE_ID" --text "Hello team!"
 
+# --- Apps Script ---
+# Upload local files to an Apps Script project
+gws apps-script-push --script-id SCRIPT_ID --source ./src
+
+# --- Workspace Events ---
+# Subscribe to Workspace events and stream them as NDJSON
+gws events-subscribe --target "//calendar.googleapis.com/calendars/primary" --event-types "google.workspace.calendar.event.v1.created"
+
+# Renew/reactivate Workspace Events subscriptions
+gws events-renew --subscription-id SUB_ID
+
+# --- Model Armor ---
+# Sanitize a user prompt through a Model Armor template
+gws modelarmor-sanitize-prompt --template "projects/P/locations/L/templates/T" --text "user input here"
+
+# Sanitize a model response through a Model Armor template
+gws modelarmor-sanitize-response --template "projects/P/locations/L/templates/T" --text "model output here"
+
+# Create a new Model Armor template
+gws modelarmor-create-template --project PROJECT --location LOCATION --template-id my-template
+
+# --- Cross-service Workflows ---
 # Today's standup report (meetings + open tasks)
 gws workflow-standup-report
 
@@ -504,7 +701,102 @@ gws workflow-email-to-task --message-id MSG_ID
 
 # Weekly digest (meetings + unread count)
 gws workflow-weekly-digest
+
+# Announce a Drive file in a Chat space
+gws workflow-file-announce --file-id FILE_ID --space "spaces/SPACE_ID"
 ```
+
+## Installing gws Skills Into Your Agent Project
+
+The gws repo ships 100+ SKILL.md files you can install directly into your agent's skills directory:
+
+```bash
+# Install ALL gws skills at once
+npx skills add https://github.com/googleworkspace/cli
+
+# Or pick only what you need
+npx skills add https://github.com/googleworkspace/cli/tree/main/skills/gws-drive
+npx skills add https://github.com/googleworkspace/cli/tree/main/skills/gws-gmail
+npx skills add https://github.com/googleworkspace/cli/tree/main/skills/gws-calendar
+npx skills add https://github.com/googleworkspace/cli/tree/main/skills/gws-sheets
+npx skills add https://github.com/googleworkspace/cli/tree/main/skills/gws-docs
+npx skills add https://github.com/googleworkspace/cli/tree/main/skills/gws-chat
+```
+
+This places SKILL.md files into your project's `.github/skills/` (Copilot), `.claude/skills/` (Claude Code), or equivalent directory, giving your agent deep per-service knowledge.
+
+## Personas (Role-Based Skill Bundles)
+
+The gws repo includes 10 pre-built persona bundles that combine multiple services for common roles:
+
+| Persona | Description | Services Used |
+|:--------|:------------|:--------------|
+| `persona-exec-assistant` | Manage an executive's schedule, inbox, and communications | Calendar, Gmail, Chat, Tasks |
+| `persona-project-manager` | Coordinate projects — track tasks, schedule meetings, share docs | Tasks, Calendar, Drive, Chat |
+| `persona-hr-coordinator` | Handle HR workflows — onboarding, announcements, employee comms | Admin, Gmail, Calendar, Docs |
+| `persona-sales-ops` | Manage sales workflows — track deals, schedule calls, client comms | Sheets, Gmail, Calendar, Chat |
+| `persona-it-admin` | Administer IT — manage users, monitor security, configure Workspace | Admin, Alert Center, Cloud Identity |
+| `persona-content-creator` | Create, organize, and distribute content across Workspace | Docs, Slides, Drive, Gmail |
+| `persona-customer-support` | Manage customer support — track tickets, respond, escalate issues | Gmail, Sheets, Chat, Tasks |
+| `persona-event-coordinator` | Plan and manage events — scheduling, invitations, and logistics | Calendar, Gmail, Drive, Chat |
+| `persona-team-lead` | Lead a team — run standups, coordinate tasks, communicate | Calendar, Tasks, Chat, Gmail |
+| `persona-researcher` | Organize research — manage references, notes, collaboration | Drive, Docs, Keep, Sheets |
+
+Install a persona:
+```bash
+npx skills add https://github.com/googleworkspace/cli/tree/main/skills/persona-exec-assistant
+npx skills add https://github.com/googleworkspace/cli/tree/main/skills/persona-it-admin
+```
+
+## Recipes (Multi-Step Task Sequences)
+
+The gws repo ships 50 curated recipes — multi-step task sequences with real commands. Key recipes:
+
+| Recipe | What It Does |
+|:-------|:-------------|
+| `recipe-audit-external-sharing` | Find and review Drive files shared outside the org |
+| `recipe-label-and-archive-emails` | Apply Gmail labels to matching messages and archive them |
+| `recipe-send-personalized-emails` | Read from Sheets, send personalized Gmail to each row |
+| `recipe-draft-email-from-doc` | Read a Google Doc and use it as Gmail body |
+| `recipe-organize-drive-folder` | Create folder structure and move files into place |
+| `recipe-share-folder-with-team` | Share a Drive folder with collaborators |
+| `recipe-email-drive-link` | Share a file and email the link |
+| `recipe-create-doc-from-template` | Copy a Docs template, fill content, share |
+| `recipe-create-expense-tracker` | Set up Sheets for expense tracking |
+| `recipe-block-focus-time` | Create recurring focus time on Calendar |
+| `recipe-reschedule-meeting` | Move event and notify attendees |
+| `recipe-search-and-export-emails` | Find matching Gmail messages and export |
+| `recipe-create-gmail-filter` | Auto-label/star incoming messages |
+| `recipe-cancel-and-notify` | Delete event and send cancellation email |
+| `recipe-find-free-time` | Query free/busy for multiple users |
+| `recipe-bulk-download-folder` | Download all files from a Drive folder |
+| `recipe-find-large-files` | Identify large Drive files consuming storage |
+| `recipe-create-shared-drive` | Create Shared Drive and add members |
+| `recipe-transfer-file-ownership` | Transfer Drive file ownership between users |
+| `recipe-post-mortem-setup` | Create Doc, schedule Calendar review, notify via Chat |
+| `recipe-save-email-attachments` | Save Gmail attachments to Drive |
+| `recipe-send-team-announcement` | Announce via Gmail and Chat simultaneously |
+| `recipe-create-feedback-form` | Create Form and share via Gmail |
+| `recipe-sync-contacts-to-sheet` | Export contacts directory to Sheets |
+| `recipe-create-events-from-sheet` | Read Sheets data and create Calendar events |
+| `recipe-generate-report-from-sheet` | Read Sheets data and create Docs report |
+| `recipe-save-email-to-doc` | Archive Gmail message body into a Doc |
+| `recipe-batch-reply-to-emails` | Find matching emails and send standard reply |
+| `recipe-batch-rename-files` | Rename Drive files to consistent naming |
+| `recipe-create-vacation-responder` | Enable Gmail out-of-office auto-reply |
+| `recipe-triage-security-alerts` | Review Workspace security alerts |
+| `recipe-deploy-apps-script` | Push local files to Apps Script project |
+| `recipe-create-meet-space` | Create Meet space and share join link |
+| `recipe-create-presentation` | Create Slides presentation with initial slides |
+| `recipe-create-classroom-course` | Create Classroom course and invite students |
+
+Install recipes:
+```bash
+npx skills add https://github.com/googleworkspace/cli/tree/main/skills/recipe-send-personalized-emails
+npx skills add https://github.com/googleworkspace/cli/tree/main/skills/recipe-audit-external-sharing
+```
+
+Full list: https://github.com/googleworkspace/cli/blob/main/docs/skills.md
 
 ## MCP Server Integration
 
@@ -518,11 +810,14 @@ gws mcp -s all                    # all services (many tools!)
 
 # Include workflow and helper tools
 gws mcp -s drive,gmail -w -e
+
+# Compact tool mode — reduces context window usage for LLMs
+gws mcp -s drive,gmail --compact
 ```
 
 ### MCP Client Configuration
 
-**VS Code / Copilot / Claude Desktop / Cursor:**
+**VS Code / Copilot (`settings.json` or `.vscode/mcp.json`):**
 ```json
 {
   "mcpServers": {
@@ -534,13 +829,39 @@ gws mcp -s drive,gmail -w -e
 }
 ```
 
+**Claude Desktop (`claude_desktop_config.json`):**
+```json
+{
+  "mcpServers": {
+    "gws": {
+      "command": "gws",
+      "args": ["mcp", "-s", "drive,gmail,calendar,sheets,docs"]
+    }
+  }
+}
+```
+
+**Cursor (`.cursor/mcp.json`):**
+```json
+{
+  "mcpServers": {
+    "gws": {
+      "command": "gws",
+      "args": ["mcp", "-s", "drive,gmail,calendar"]
+    }
+  }
+}
+```
+
 **Gemini CLI Extension:**
 ```bash
 gws auth setup
 gemini extensions install https://github.com/googleworkspace/cli
 ```
 
-> **Tip:** Each service adds roughly 10–80 tools. Keep the list to what you actually need to stay under your client's tool limit (typically 50–100 tools).
+Installing the Gemini extension gives your Gemini CLI agent direct access to all `gws` commands and skills. The extension automatically inherits your terminal credentials.
+
+> **Tip:** Each service adds roughly 10–80 tools. Keep the list to what you actually need to stay under your client's tool limit (typically 50–100 tools). Use `--compact` flag to reduce context window usage.
 
 ### MCP Flags
 
@@ -549,6 +870,7 @@ gemini extensions install https://github.com/googleworkspace/cli
 | `-s, --services <list>` | Comma-separated services to expose, or `all` |
 | `-w, --workflows` | Also expose workflow tools |
 | `-e, --helpers` | Also expose helper tools |
+| `--compact` | Compact tool mode — reduces tool descriptions to save context window |
 
 ## Advanced Usage
 
@@ -626,6 +948,7 @@ Use this table to decide which `gws` command to run based on what the user is as
 | Manage tasks and to-do lists | `tasks` | `gws tasks tasks list/insert/update` |
 | Create meeting links | `meet` | `gws meet spaces create` |
 | Create forms, read responses | `forms` | `gws forms forms create`, `gws forms forms responses list` |
+| Manage contacts and profiles | `people` | `gws people people connections list` |
 | Manage users, groups, devices | `admin` | `gws admin users list`, `gws admin groups list` |
 | Manage notes | `keep` | `gws keep notes list` |
 | Run/deploy Apps Script projects | `apps-script` | `gws apps-script projects list` |
@@ -636,6 +959,9 @@ Use this table to decide which `gws` command to run based on what the user is as
 | Manage Google Vault (eDiscovery) | `vault` | `gws vault matters list` |
 | Manage Workspace licenses | `licensing` | `gws licensing licenseAssignments list` |
 | Manage Google Classroom | `classroom` | `gws classroom courses list` |
+| Configure Google Groups settings | `groupssettings` | `gws groupssettings groups get/update` |
+| Manage Workspace subscriptions | `reseller` | `gws reseller subscriptions list` |
+| Sanitize content for safety | `modelarmor` | `gws modelarmor-sanitize-prompt` |
 
 ## Environment Variables Reference
 
@@ -660,10 +986,23 @@ Use this table to decide which `gws` command to run based on what the user is as
 | `accessNotConfigured` | Enable the required API at the URL shown in the error, then retry |
 | Stale credentials | Run `gws auth login` to re-authenticate |
 
+## Architecture
+
+`gws` uses a two-phase parsing strategy:
+
+1. Read `argv[1]` to identify the service (e.g. `drive`)
+2. Fetch the service's Discovery Document (cached 24 hours)
+3. Build a `clap::Command` tree from the document's resources and methods
+4. Re-parse the remaining arguments
+5. Authenticate, build the HTTP request, execute
+
+All output — success, errors, download metadata — is structured JSON. This means every response is directly parseable by agents without any text extraction.
+
 ## Resources
 
 - **GitHub Repo**: https://github.com/googleworkspace/cli
 - **npm Package**: https://www.npmjs.com/package/@googleworkspace/cli
-- **Skills Index**: https://github.com/googleworkspace/cli/blob/main/docs/skills.md
+- **Skills Index (100+ skills)**: https://github.com/googleworkspace/cli/blob/main/docs/skills.md
 - **Google Discovery API**: https://developers.google.com/discovery
 - **Google Workspace APIs**: https://developers.google.com/workspace
+- **Releases & Binaries**: https://github.com/googleworkspace/cli/releases
