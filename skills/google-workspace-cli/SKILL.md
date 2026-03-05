@@ -9,6 +9,8 @@ One CLI for **all** of Google Workspace — Drive, Gmail, Calendar, Sheets, Docs
 
 > **Note:** This is not an officially supported Google product.
 
+> **Important:** This project is under active development. Expect breaking changes as we march toward v1.0.
+
 **Repository:** https://github.com/googleworkspace/cli
 
 ## How It Works
@@ -45,6 +47,15 @@ nix run github:googleworkspace/cli
 
 ## Authentication
 
+### Which setup should I use?
+
+| I have… | Use |
+|:--------|:----|
+| `gcloud` installed and authenticated | `gws auth setup` (fastest — one command) |
+| A GCP project but no `gcloud` | Manual OAuth setup in Cloud Console |
+| An existing OAuth access token | `GOOGLE_WORKSPACE_CLI_TOKEN` env var |
+| Existing credentials JSON (service account or exported) | `GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE` env var |
+
 ### Quick Setup (recommended — requires gcloud CLI)
 
 ```bash
@@ -56,10 +67,12 @@ gws auth login       # subsequent logins with scope selection
 
 ### Scoped Login (for unverified/testing OAuth apps, limited to ~25 scopes)
 
+> **Warning:** Unverified (testing-mode) apps are limited to ~25 OAuth scopes. The `recommended` scope preset includes 85+ scopes and **will fail** for unverified apps (especially for `@gmail.com` accounts). Choose individual services instead:
+
 ```bash
 # Select only the services you need to stay under the scope limit
 gws auth login -s drive,gmail,sheets
-gws auth login -s drive,gmail,calendar,docs,chat
+gws auth login --scopes drive,gmail,calendar,docs,chat
 ```
 
 ### Multiple Accounts
@@ -74,6 +87,8 @@ gws auth default work@corp.com                   # set the default
 gws --account personal@gmail.com drive files list  # one-off override
 export GOOGLE_WORKSPACE_CLI_ACCOUNT=personal@gmail.com  # env var override
 ```
+
+Credentials are stored per-account as `credentials.<b64-email>.enc` in `~/.config/gws/`, with an `accounts.json` registry tracking defaults.
 
 ### Manual OAuth Setup (no gcloud)
 
@@ -145,6 +160,7 @@ gws <service> <resource> <method> [--params '{ JSON }'] [--json '{ JSON }'] [fla
 
 | Flag | Description |
 |:-----|:------------|
+| `--help` | Show help for any service, resource, or method |
 | `--params '{ JSON }'` | URL/query parameters as JSON |
 | `--json '{ JSON }'` | Request body as JSON |
 | `--dry-run` | Preview the HTTP request without executing |
@@ -723,6 +739,21 @@ npx skills add https://github.com/googleworkspace/cli/tree/main/skills/gws-docs
 npx skills add https://github.com/googleworkspace/cli/tree/main/skills/gws-chat
 ```
 
+<details>
+<summary>OpenClaw setup</summary>
+
+```bash
+# Symlink all skills (stays in sync with repo)
+ln -s $(pwd)/skills/gws-* ~/.openclaw/skills/
+
+# Or copy specific skills
+cp -r skills/gws-drive skills/gws-gmail ~/.openclaw/skills/
+```
+
+The `gws-shared` skill includes an `install` block so OpenClaw auto-installs the CLI via `npm` if `gws` isn't on PATH.
+
+</details>
+
 This places SKILL.md files into your project's `.github/skills/` (Copilot), `.claude/skills/` (Claude Code), or equivalent directory, giving your agent deep per-service knowledge.
 
 ## Personas (Role-Based Skill Bundles)
@@ -983,8 +1014,38 @@ Use this table to decide which `gws` command to run based on what the user is as
 | Too many scopes error | Use `gws auth login -s drive,gmail,sheets` to select fewer services |
 | `gcloud` CLI not found | Install gcloud or set up OAuth manually in Cloud Console |
 | `redirect_uri_mismatch` | Re-create OAuth client as Desktop app type |
-| `accessNotConfigured` | Enable the required API at the URL shown in the error, then retry |
+| `accessNotConfigured` | See detailed fix below |
 | Stale credentials | Run `gws auth login` to re-authenticate |
+
+### API not enabled — `accessNotConfigured`
+
+If a required Google API is not enabled for your GCP project, you will see a 403 error:
+
+```json
+{
+  "error": {
+    "code": 403,
+    "message": "Gmail API has not been used in project 549352339482 ...",
+    "reason": "accessNotConfigured",
+    "enable_url": "https://console.developers.google.com/apis/api/gmail.googleapis.com/overview?project=549352339482"
+  }
+}
+```
+
+`gws` also prints an actionable hint to stderr:
+
+```
+💡 API not enabled for your GCP project.
+   Enable it at: https://console.developers.google.com/apis/api/gmail.googleapis.com/overview?project=549352339482
+   After enabling, wait a few seconds and retry your command.
+```
+
+**Steps to fix:**
+1. Click the `enable_url` link (or copy it from the JSON `enable_url` field).
+2. In the GCP Console, click **Enable**.
+3. Wait ~10 seconds, then retry your `gws` command.
+
+> **Tip:** You can also run `gws auth setup` which walks you through enabling all required APIs for your project automatically.
 
 ## Architecture
 
@@ -1006,3 +1067,7 @@ All output — success, errors, download metadata — is structured JSON. This m
 - **Google Discovery API**: https://developers.google.com/discovery
 - **Google Workspace APIs**: https://developers.google.com/workspace
 - **Releases & Binaries**: https://github.com/googleworkspace/cli/releases
+
+## License
+
+Apache-2.0
