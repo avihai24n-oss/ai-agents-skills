@@ -12,9 +12,25 @@
 
 ---
 
-## 🆕 NEW: Honest Agent Skill
+## 🆕 NEW: Google Workspace CLI Skill
 
-**Just added!** A universal skill that configures ALL your AI coding agents to be honest, objective, and non-sycophantic. Run it once, and every agent (Claude Code, GitHub Copilot, Cursor, Windsurf, etc.) will stop telling you what you want to hear and start giving you honest, direct feedback.
+**Just added!** A comprehensive skill that teaches AI agents to use the `gws` CLI — one command-line tool for **all** of Google Workspace: Drive, Gmail, Calendar, Sheets, Docs, Slides, Chat, Tasks, Admin, Meet, Forms, Keep, and more. Your agent can now manage your entire Google Workspace without custom tooling.
+
+🔗 **[View the Google Workspace CLI Skill →](skills/google-workspace-cli/SKILL.md)**
+
+**What it does:**
+- Enables AI agents to interact with every Google Workspace API via `gws` CLI commands
+- Covers Drive, Gmail, Calendar, Sheets, Docs, Slides, Chat, Tasks, Meet, Forms, Admin, Keep, Apps Script, and more
+- Includes 100+ ready-to-use command examples with real JSON payloads
+- MCP server integration for Claude Desktop, VS Code, Gemini CLI, and other MCP clients
+- Multiple auth workflows: interactive, headless/CI, service accounts, and multi-account support
+- Built on Google's Discovery Service — automatically picks up new API endpoints
+
+---
+
+## 🧠 Honest Agent Skill
+
+A universal skill that configures ALL your AI coding agents to be honest, objective, and non-sycophantic. Run it once, and every agent (Claude Code, GitHub Copilot, Cursor, Windsurf, etc.) will stop telling you what you want to hear and start giving you honest, direct feedback.
 
 🔗 **[View the Honest Agent Skill →](skills/honest-agent/SKILL.md)**
 
@@ -233,6 +249,7 @@ Agent Skills work with these AI coding agents:
 
 | Skill | Description | Keywords |
 |:------|:------------|:---------|
+| **[google-workspace-cli](skills/google-workspace-cli/SKILL.md)** 🆕 | Google Workspace CLI (`gws`) — Drive, Gmail, Calendar, Sheets, Docs, Chat & more | `gws`, `Google Workspace`, `Google Drive`, `Gmail`, `Google Calendar`, `Google Sheets`, `MCP` |
 | **[copilot-sdk](skills/copilot-sdk/SKILL.md)** | GitHub Copilot SDK for building agentic applications | `Copilot SDK`, `GitHub SDK`, `agentic app`, `embed Copilot` |
 | **[honest-agent](skills/honest-agent/SKILL.md)** 🆕 | Configure all AI agents for honest, objective feedback | `honest agent`, `no sycophancy`, `objective`, `contradict me` |
 | **[aws-agentcore](skills/aws-agentcore/SKILL.md)** | AWS Bedrock AgentCore development patterns | `AgentCore`, `Bedrock Agent`, `AWS agent` |
@@ -523,9 +540,11 @@ Quick start and core patterns...
 ai-agents-skills/
 ├── 📄 README.md
 ├── 📁 skills/
+│   ├── 📁 google-workspace-cli/ # 🆕 NEW!
+│   │   └── 📄 SKILL.md
 │   ├── 📁 copilot-sdk/
 │   │   └── 📄 SKILL.md
-│   ├── 📁 honest-agent/       # 🆕 NEW!
+│   ├── 📁 honest-agent/
 │   │   └── 📄 SKILL.md
 │   ├── 📁 aws-agentcore/
 │   │   └── 📄 SKILL.md
