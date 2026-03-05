@@ -20,7 +20,7 @@ One CLI for **all** of Google Workspace — Drive, Gmail, Calendar, Sheets, Docs
 ## Prerequisites
 
 - **Node.js 18+** — for `npm install` (or download a pre-built binary from [GitHub Releases](https://github.com/googleworkspace/cli/releases))
-- **A Google Cloud project** — required for OAuth credentials
+- **A Google Cloud project** — required for OAuth credentials. You can create one via the [Google Cloud Console](https://console.cloud.google.com/), with the [`gcloud` CLI](https://cloud.google.com/sdk/docs/install), or with the `gws auth setup` command.
 - **A Google account** with access to Google Workspace
 
 ## Installation
@@ -43,6 +43,14 @@ cargo install --git https://github.com/googleworkspace/cli --locked
 
 # Nix flake
 nix run github:googleworkspace/cli
+```
+
+## Quick Start
+
+```bash
+gws auth setup     # walks you through Google Cloud project config
+gws auth login     # subsequent OAuth login
+gws drive files list --params '{"pageSize": 5}'
 ```
 
 ## Authentication
@@ -92,12 +100,22 @@ Credentials are stored per-account as `credentials.<b64-email>.enc` in `~/.confi
 
 ### Manual OAuth Setup (no gcloud)
 
-1. Open [Google Cloud Console](https://console.cloud.google.com/) → create or select a project
-2. Go to **OAuth consent screen** → configure as External (testing mode is fine)
+Use this when `gws auth setup` cannot automate project/client creation, or when you want explicit control.
+
+1. Open Google Cloud Console in the target project:
+   - OAuth consent screen: `https://console.cloud.google.com/apis/credentials/consent?project=<PROJECT_ID>`
+   - Credentials: `https://console.cloud.google.com/apis/credentials?project=<PROJECT_ID>`
+2. Configure OAuth branding/audience if prompted — App type: **External** (testing mode is fine)
 3. Add your account under **Test users**
-4. Go to **Credentials** → Create OAuth client → Type: **Desktop app**
+4. Create an OAuth client — Type: **Desktop app**
 5. Download the client JSON → save to `~/.config/gws/client_secret.json`
-6. Run `gws auth login`
+
+> **Important:** You must add yourself as a test user. In the OAuth consent screen, click **Test users → Add users** and enter your Google account email. Without this, login will fail with a generic "Access blocked" error.
+
+Then run:
+```bash
+gws auth login
+```
 
 ### Headless / CI
 
