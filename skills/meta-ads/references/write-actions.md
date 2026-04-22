@@ -1,6 +1,6 @@
 # Write Actions: Safety Protocol
 
-This file is **mandatory reading** before calling `pause_ad.py`, `update_budget.py`, or `duplicate_ad.py`. These scripts touch real money. A misread analysis or a confidently-wrong recommendation can pause a winning ad, 10x a losing budget, or duplicate the wrong creative across an account. There's no "undo" button — Meta will execute the change instantly and you'll be reconstructing the previous state from `effective_status` history if it goes wrong.
+This file is **mandatory reading** before calling `pause_ad.py`, `update_budget.py`, `duplicate_ad.py`, or `create_campaign.py`. These scripts touch real money. A misread analysis or a confidently-wrong recommendation can pause a winning ad, 10x a losing budget, duplicate the wrong creative, or launch a campaign against the wrong landing page. There's no "undo" button — Meta will execute the change instantly and you'll be reconstructing the previous state from `effective_status` history if it goes wrong.
 
 ## The five non-negotiable rules
 
@@ -77,6 +77,20 @@ If the plan is "duplicate the winning ad, then pause the original" — don't run
 - Naming: Meta's default suffix is " - Copy". Use `--rename` to keep the account organized — naming chaos compounds fast across iterations.
 - Duplicate ≠ fresh creative. A duplicated ad is the same ad, just a new ID. It enters its own learning phase but the *creative* is identical. If the original is fatigued because of creative burnout, duplicating won't help — only new creative will.
 
+### `create_campaign.py`
+
+This is the newest and highest-blast-radius write. One `--confirm` run produces a campaign plus N ad sets plus M creatives plus M ads — typically 5-10+ new objects from a single command. Get it wrong and you're rolling back a tree of objects spread across Ads Manager.
+
+- **Dry-run is not optional.** Before the first `--confirm` of any spec, run `--dry-run` and walk the full plan back to the user: campaign name, objective, identity (page + IG), every ad set's targeting and budget, every ad's headline and CTA. Only ask for confirmation after the user has seen this.
+- **All objects default to PAUSED.** Don't override `status: ACTIVE` on creation unless the user has explicitly typed "create ACTIVE" or the equivalent in their language. The PAUSED default is a checkpoint — the user flips to ACTIVE in Ads Manager once they've eyeballed the creative, which catches problems the API can't (wrong image, weird Hebrew rendering, headline that looks fine at 40 chars in a spec but truncates ugly on mobile).
+- **Never launch a conversions campaign against an account with no pixel.** Even if the user asks for `objective: OUTCOME_SALES`, if `/me/pixels` returns empty or no Purchase events have fired in 30+ days, refuse and explain why: Meta has nothing to optimize toward, spend will go to random clicks, and the campaign will look broken by week 2. Offer `OUTCOME_TRAFFIC` as the interim path. Document this decision to the user before proceeding.
+- **Watch for `UNSETTLED` on the ad account.** `list_accounts.py` reports account status. If the account is unsettled, objects get created but nothing delivers. That's fine — surface it, don't block. Users typically want the structure in place while they clear the balance.
+- **`special_ad_categories` matters.** If the campaign is for housing, employment, credit, or political/social issues, the spec MUST set the right category. Wrong category = total campaign rejection on review, with a Meta penalty counter. If the user's copy mentions loans, interest rates, job listings, or political figures, confirm the category before `--confirm`.
+- **Creative review expects accurate claims.** Social proof numbers ("10,000+ enrolled"), ranking claims ("#1 in Israel"), guarantee language, celebrity endorsements — all get reviewed. Before `--confirm`, surface every numeric or superlative claim baked into the image or copy and ask the user whether it's truthful and provable. Fabricated social proof isn't just ethically bad — it gets the whole creative banned.
+- **State file is the rollback surface.** Every `--confirm` writes `<spec>_state_<timestamp>.json` with every object ID in creation order. Keep it. If anything's wrong after creation, `rollback_creation.py --state <file> --pause` soft-stops everything in one call.
+- **One campaign at a time.** Don't batch multiple `--confirm` calls. Each campaign is a separate spec, separate dry-run, separate explicit confirmation. This limits blast radius if the spec is broken.
+- **Never chain create → activate.** If the user wants the campaign live immediately, that's a separate subsequent confirmation: create (PAUSED), verify the objects look right by fetching them back and reading creative previews, then call the activation as its own write.
+
 ## When something goes wrong
 
 If you executed a write and the user wants to undo it:
@@ -88,8 +102,9 @@ If you executed a write and the user wants to undo it:
 ## What this skill will NOT help with
 
 - **Bulk operations across accounts.** Each call is scoped to one ad account at a time. Multi-account bulk = multi-tenant work, wrong skill.
-- **Creative editing or upload.** Out of scope for v1. Meta's creative endpoints have a learning curve and a bigger blast radius.
-- **Audience creation or modification.** Same reason.
+- **Editing existing creatives.** You can CREATE new creatives via `create_campaign.py` (link_data with image upload). Modifying the image or copy on an already-live creative is a different shape — Meta requires a new creative object and swap on the ad. Out of scope for v1.
+- **Dynamic creative, catalog ads, collection ads.** `create_campaign.py` handles single-image link ads only. Those other formats use `asset_feed_spec`, `product_set_id`, or `template_data` — extend the script or write a sibling for them.
+- **Custom Audience creation or modification.** You can USE existing Custom Audience IDs in `targeting.custom_audiences`, but building a new audience (from pixel events, customer lists, IG engagers, etc.) is a separate API surface and out of scope for v1.
 - **Pixel / CAPI event manipulation.** Different API entirely (Conversions API), different auth, different mental model.
 - **Scheduled writes.** This skill is on-demand. If the user wants "pause all ads with frequency >4 every Monday morning," that belongs in a scheduler (cron, a scheduled-tasks integration, etc.), not inside this skill.
 
