@@ -12,6 +12,23 @@
 
 ---
 
+## 🆕 NEW: Meta Ads Skill
+
+**Just added!** A battle-tested skill for pulling, analyzing, and managing Meta ad performance (Facebook, Instagram, Messenger, Click-to-WhatsApp, Threads) via the Marketing API. No guesswork, no generic dashboards — the scripts auto-discover your accounts, decode status codes and currency units, handle rate limits and async insights jobs, and guard write actions behind explicit confirmations.
+
+🔗 **[View the Meta Ads Skill →](skills/meta-ads/SKILL.md)**
+
+**What it does:**
+- Pulls ad-level, ad-set-level, campaign-level, and account-level insights with full breakdowns (platform, placement, age, gender, country, device)
+- Auto-discovers every ad account your token can see, ranked by last-30-day spend — so you never paste the wrong `act_` ID
+- Handles both auth paths out of the box: System User tokens (never expire, BM-owned accounts) and long-lived user tokens (60-day, sees personal Instagram-boost accounts)
+- Ships a token-exchange script for the short→60-day swap — no more fumbling through Graph Explorer docs
+- Creative fatigue detection, anomaly detection vs. prior period, CTWA-aware analysis playbooks
+- Write actions (pause, budget update, duplicate) gated behind explicit confirmation with impact summaries and rollback patterns
+- Baked-in troubleshooting for every failure mode we hit the hard way: sandbox proxy blocks, 37-month data wall, DELETED-status error 1815001, minor-unit currency bugs, IG boosts invisible to SU tokens, and more
+
+---
+
 ## 🆕 NEW: Google Workspace CLI Skill
 
 **Just added!** A comprehensive skill that teaches AI agents to use the `gws` CLI — one command-line tool for **all** of Google Workspace: Drive, Gmail, Calendar, Sheets, Docs, Slides, Chat, Tasks, Admin, Meet, Forms, Keep, and more. Your agent can now manage your entire Google Workspace without custom tooling.
@@ -249,6 +266,7 @@ Agent Skills work with these AI coding agents:
 
 | Skill | Description | Keywords |
 |:------|:------------|:---------|
+| **[meta-ads](skills/meta-ads/SKILL.md)** 🆕 | Meta Marketing API — Facebook, Instagram, CTWA ad insights, fatigue analysis, write actions | `Meta ads`, `Facebook ads`, `Instagram ads`, `Marketing API`, `ROAS`, `CPA`, `CTR`, `CTWA`, `creative fatigue` |
 | **[google-workspace-cli](skills/google-workspace-cli/SKILL.md)** 🆕 | Google Workspace CLI (`gws`) — Drive, Gmail, Calendar, Sheets, Docs, Chat & more | `gws`, `Google Workspace`, `Google Drive`, `Gmail`, `Google Calendar`, `Google Sheets`, `MCP` |
 | **[copilot-sdk](skills/copilot-sdk/SKILL.md)** | GitHub Copilot SDK for building agentic applications | `Copilot SDK`, `GitHub SDK`, `agentic app`, `embed Copilot` |
 | **[honest-agent](skills/honest-agent/SKILL.md)** 🆕 | Configure all AI agents for honest, objective feedback | `honest agent`, `no sycophancy`, `objective`, `contradict me` |
@@ -540,6 +558,29 @@ Quick start and core patterns...
 ai-agents-skills/
 ├── 📄 README.md
 ├── 📁 skills/
+│   ├── 📁 meta-ads/              # 🆕 NEW!
+│   │   ├── 📄 SKILL.md
+│   │   ├── 📄 requirements.txt
+│   │   ├── 📁 assets/
+│   │   │   └── 📄 env.template
+│   │   ├── 📁 references/
+│   │   │   ├── 📄 setup.md
+│   │   │   ├── 📄 insights-fields.md
+│   │   │   ├── 📄 analysis-playbooks.md
+│   │   │   ├── 📄 write-actions.md
+│   │   │   └── 📄 troubleshooting.md
+│   │   └── 📁 scripts/
+│   │       ├── 📄 meta_client.py
+│   │       ├── 📄 auth_check.py
+│   │       ├── 📄 exchange_token.py
+│   │       ├── 📄 list_accounts.py
+│   │       ├── 📄 list_campaigns.py
+│   │       ├── 📄 fetch_insights.py
+│   │       ├── 📄 creative_fatigue.py
+│   │       ├── 📄 anomaly_detect.py
+│   │       ├── 📄 pause_ad.py
+│   │       ├── 📄 update_budget.py
+│   │       └── 📄 duplicate_ad.py
 │   ├── 📁 google-workspace-cli/ # 🆕 NEW!
 │   │   └── 📄 SKILL.md
 │   ├── 📁 copilot-sdk/
