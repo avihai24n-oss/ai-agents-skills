@@ -13,7 +13,12 @@ Any question about Meta ad performance, creative health, audience/placement mix,
 
 ## Three things to internalize before touching any script
 
-**1. Where the scripts run matters.** The scripts call `graph.facebook.com` over the open internet. Some execution environments (including Claude's Linux sandbox in certain configurations) block this endpoint via proxy. If you hit a `ProxyError` / `Tunnel connection failed: 403` on the first call, run the scripts from the **user's host machine** (their Mac/Windows/Linux) instead, using that machine's Python. On macOS that usually means `/usr/bin/python3`; on Windows, the user's system Python. Install deps there first (`pip install --user requests` or `pip install -r requirements.txt`).
+**1. Where the scripts run matters.** The scripts call `graph.facebook.com` over the open internet. Some execution environments (including Claude's Linux sandbox in certain configurations) block this endpoint via proxy. If you hit a `ProxyError` / `Tunnel connection failed: 403` on the first call, run the scripts from the **user's host machine** — macOS, Windows, or Linux — using that machine's Python. Per-OS commands:
+- **macOS:** `python3 scripts/auth_check.py`, deps via `python3 -m pip install --user requests`
+- **Windows:** `python scripts/auth_check.py` (or `py scripts/auth_check.py` if `python` isn't on PATH), deps via `python -m pip install --user requests`
+- **Linux:** `python3 scripts/auth_check.py`, deps via `python3 -m pip install --user requests` (add `--break-system-packages` on Debian/Ubuntu 22+)
+
+The scripts themselves are pure Python with one dependency (`requests`) and no shell/OS assumptions, so they run identically everywhere once dependencies are installed.
 
 **2. WhatsApp is not a separate ad surface.** Click-to-WhatsApp ads run on Facebook and Instagram placements. They show up in the Marketing API as regular ads with `destination_type=WHATSAPP` and conversion events under `actions` (look for `onsite_conversion.messaging_conversation_started_7d` and similar). Don't promise the user a "WhatsApp ads dashboard" — there isn't one.
 
@@ -32,6 +37,16 @@ The first three calls are always the same:
 3. `python scripts/list_campaigns.py` — once you have the right account, what campaigns are on it?
 
 If any of these fail, stop and walk the user through `references/setup.md`. Don't try to be clever and guess credentials.
+
+### How to guide a user through setup (first-timers)
+
+`references/setup.md` is written as a click-by-click walkthrough. When a user has no credentials yet:
+
+1. **One step at a time.** Don't dump the whole document. Ask them which OS they're on, then give them the prerequisites block for that OS. Wait for them to report "done" before moving on.
+2. **Confirm the path choice.** Walk through the Step 0 decision questions with them in chat. Don't assume — especially "do you boost from Instagram?" is easy to misjudge.
+3. **Read back what they paste.** When they share a token, App ID, or ad account ID, echo it back (redact tokens to the first 8 chars) and confirm you have it right before you move on. This catches the #1 setup bug: pasting the System User's ID where the Ad Account ID should go.
+4. **Verify before moving on.** After they fill in `.env`, run `auth_check.py` immediately. Don't let them run analysis commands until the verification returns `ok: true` — every "the report is empty" issue traces back to a half-broken `.env`.
+5. **Match their OS in every command.** If they said "I'm on Windows," don't tell them to run `python3` — tell them `python` or `py`. If they said "Mac", use `python3`. The setup.md has per-OS blocks; copy the matching one into chat.
 
 Required env vars (user provides these once during setup):
 - `META_ACCESS_TOKEN` — either a long-lived user token (Path B, 60 days) or System User token (Path A, never expires). See the decision tree below.

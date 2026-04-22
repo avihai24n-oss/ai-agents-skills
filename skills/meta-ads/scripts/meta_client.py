@@ -29,10 +29,13 @@ try:
 except ImportError:
     print(
         "[meta-ads] Missing dependency: requests.\n"
-        "  Install with one of:\n"
-        "    pip install --user requests\n"
-        "    pip install --break-system-packages requests   # Linux sandbox\n"
-        "    pip install -r requirements.txt\n",
+        "  Install it for your OS:\n"
+        "    macOS:   python3 -m pip install --user requests\n"
+        "    Windows: python  -m pip install --user requests\n"
+        "             (or: py -m pip install --user requests)\n"
+        "    Linux:   python3 -m pip install --user requests\n"
+        "             (add --break-system-packages on Debian/Ubuntu 22+)\n"
+        "  Or, from the skill directory: pip install -r requirements.txt\n",
         file=sys.stderr,
     )
     sys.exit(1)

@@ -62,19 +62,91 @@ Don't try curl / wget / a different HTTP library — the block is at the proxy l
 
 ### `ModuleNotFoundError: No module named 'requests'`
 
-Python doesn't have `requests` installed. The error message from `meta_client.py` already tells you the fix; pick the one that matches your environment:
+Python doesn't have `requests` installed. Pick the command that matches your OS:
 
 ```bash
-pip install --user requests                 # normal case
-pip install --break-system-packages requests # Ubuntu/Debian sandbox with PEP 668
-pip install -r requirements.txt             # from the skill directory
+# macOS
+python3 -m pip install --user requests
+
+# Windows (PowerShell or cmd)
+python -m pip install --user requests
+# or if that fails:
+py -m pip install --user requests
+
+# Linux (normal case)
+python3 -m pip install --user requests
+
+# Linux with PEP 668 enforcement (Debian/Ubuntu 22+)
+python3 -m pip install --user --break-system-packages requests
 ```
 
-If you installed it but still see the error, you probably have multiple Python versions — check with `which python3` and `python3 -m pip show requests`. Install against the same interpreter you're running the script with.
+If you installed it but still see the error, you probably have multiple Python versions on your machine. Install against the same interpreter you're running the script with — find it with:
+- macOS / Linux: `which python3` then `python3 -m pip show requests`
+- Windows: `where python` then `python -m pip show requests`
 
 ### `SSLError` / certificate verification failed
 
-Either the host clock is badly wrong (check `date`) or a corporate proxy is intercepting TLS. For corporate networks, export `REQUESTS_CA_BUNDLE` to point at your org's CA bundle, or run on a personal machine.
+Either the host clock is badly wrong (check `date` on macOS/Linux or `Get-Date` in PowerShell) or a corporate proxy is intercepting TLS. For corporate networks, set `REQUESTS_CA_BUNDLE` to point at your org's CA bundle, or run on a personal machine.
+
+---
+
+## Windows-specific issues
+
+### `python` is not recognized as an internal or external command
+
+Python isn't on your PATH. Two fixes:
+
+1. **Re-run the Python installer** from <https://www.python.org/downloads/windows/> and on the first screen tick **"Add python.exe to PATH"**. Close and reopen your terminal after installing.
+2. **Use `py` instead.** The Python launcher `py` is installed separately and usually works even when `python` doesn't:
+   ```powershell
+   py --version
+   py scripts/auth_check.py
+   py -m pip install --user requests
+   ```
+
+### Hebrew, Arabic, or other non-Latin characters show as `?` or garbled in cmd.exe
+
+cmd.exe's default code page is Windows-1252, which can't display Unicode. Switch to UTF-8 for the current session:
+
+```cmd
+chcp 65001
+```
+
+Then re-run your script. To make UTF-8 the default permanently, set the system locale in **Region settings → Administrative → "Beta: Use Unicode UTF-8 for worldwide language support"** (requires a reboot).
+
+PowerShell and Windows Terminal usually handle UTF-8 correctly without changes.
+
+### Scripts run but `.env` values aren't being picked up
+
+Windows line endings (CRLF) can break the `.env` parser on older tooling, though `meta_client.py`'s loader handles CRLF correctly. If you suspect it's the issue, open `.env` in VS Code and check the bottom-right — if it says "CRLF" click to change to "LF" and save.
+
+### `Copy-Item : Cannot find path` in PowerShell when copying `.env`
+
+You're not in the skill's directory, or the template name is different. Verify:
+
+```powershell
+Get-Location           # should end in \skills\meta-ads
+Get-ChildItem assets   # should list env.template
+```
+
+### PowerShell execution policy prevents running scripts
+
+You shouldn't hit this because the skill only uses `.py` files (not PowerShell scripts), but if you add a `.ps1` wrapper and get "running scripts is disabled on this system", run:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+### Long path errors when running scripts from deep directories
+
+Windows has a legacy 260-character path limit. If your skill folder is nested very deep (e.g., `C:\Users\you\OneDrive\Documents\Projects\whatever\ai-agents-skills\skills\meta-ads\…`) and you see "file name too long" errors, either move the folder closer to the drive root or enable long paths in Windows:
+
+```powershell
+# Run as admin
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1
+```
+
+Then reboot.
 
 ---
 
